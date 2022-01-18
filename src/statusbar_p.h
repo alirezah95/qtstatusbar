@@ -31,7 +31,9 @@ public:
     static bool isAvailable_sys();
     static void setColor_sys(const QColor &color);
     static void setTheme_sys(StatusBar::Theme theme);
+	static void setForceDarkMode_sys(bool force);
 
+	static bool forceDarkMode;
     static QColor color;
     static StatusBar::Theme theme;
 };

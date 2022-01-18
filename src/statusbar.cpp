@@ -23,11 +23,19 @@
 #include "statusbar.h"
 #include "statusbar_p.h"
 
-QColor StatusBarPrivate::color;
+QColor StatusBarPrivate::color = QColor("black");
 StatusBar::Theme StatusBarPrivate::theme = StatusBar::Light;
+bool StatusBarPrivate::forceDarkMode = false;
 
 StatusBar::StatusBar(QObject *parent) : QObject(parent)
 {
+	/* Calling functions with default values to make sure default values are
+	 * affected in case that they are not set in Qml.
+	 */
+	setColor(StatusBarPrivate::color);
+	setTheme(StatusBarPrivate::theme);
+	setForceDarkMode(StatusBarPrivate::forceDarkMode);
+	return;
 }
 
 bool StatusBar::isAvailable()
@@ -55,4 +63,15 @@ void StatusBar::setTheme(Theme theme)
 {
     StatusBarPrivate::theme = theme;
     StatusBarPrivate::setTheme_sys(theme);
+}
+
+bool StatusBar::forceDarkMode() const
+{
+	return StatusBarPrivate::forceDarkMode;
+}
+
+void StatusBar::setForceDarkMode(bool newForceDarkMode)
+{
+	StatusBarPrivate::forceDarkMode = newForceDarkMode;
+	StatusBarPrivate::setForceDarkMode_sys(newForceDarkMode);
 }

@@ -32,6 +32,7 @@ class StatusBar : public QObject
     Q_PROPERTY(bool available READ isAvailable CONSTANT)
     Q_PROPERTY(QColor color READ color WRITE setColor)
     Q_PROPERTY(Theme theme READ theme WRITE setTheme)
+	Q_PROPERTY(bool forceDarkMode READ forceDarkMode WRITE setForceDarkMode)
 
 public:
     explicit StatusBar(QObject *parent = nullptr);
@@ -45,7 +46,9 @@ public:
     Q_ENUM(Theme)
 
     static Theme theme();
-    static void setTheme(Theme theme);
+	static void setTheme(Theme theme);
+	bool forceDarkMode() const;
+	void setForceDarkMode(bool newForceDarkMode);
 };
 
 #endif // STATUSBAR_H

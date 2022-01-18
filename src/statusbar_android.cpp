@@ -23,19 +23,23 @@
 #include "statusbar_p.h"
 #include <QJniObject>
 #include <QCoreApplication>
+#include <QColor>
 
 
 // WindowManager.LayoutParams
 #define FLAG_TRANSLUCENT_STATUS 0x04000000
 #define FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS 0x80000000
+#define APPEARANCE_LIGHT_STATUS_BARS 0x00000008
 // View
 #define SYSTEM_UI_FLAG_LIGHT_STATUS_BAR 0x00002000
 
 static QJniObject getAndroidWindow()
 {
 	QJniObject context = QNativeInterface::QAndroidApplication::context();
-	QJniObject obj = context.callObjectMethod("getWindow", "()Landroid/view/Window;");
-	obj.callMethod<void>("clearFlags", "(I)V", FLAG_TRANSLUCENT_STATUS);
+	QJniObject obj = context.callObjectMethod("getWindow",
+											  "()Landroid/view/Window;");
+	if (QNativeInterface::QAndroidApplication::sdkVersion() <= 30)
+		obj.callMethod<void>("clearFlags", "(I)V", FLAG_TRANSLUCENT_STATUS);
 	obj.callMethod<void>("addFlags", "(I)V", FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
 	return obj;
 }
@@ -48,27 +52,52 @@ bool StatusBarPrivate::isAvailable_sys()
 void StatusBarPrivate::setColor_sys(const QColor &color)
 {
 	if (QNativeInterface::QAndroidApplication::sdkVersion() < 21)
-        return;
+		return;
 
 	QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
 		QJniObject window = getAndroidWindow();
-        window.callMethod<void>("setStatusBarColor", "(I)V", color.rgba());
-    });
+		window.callMethod<void>("setStatusBarColor", "(I)V", color.rgba());
+	});
 }
 
 void StatusBarPrivate::setTheme_sys(StatusBar::Theme theme)
 {
 	if (QNativeInterface::QAndroidApplication::sdkVersion() < 23)
-        return;
+		return;
 
 	QNativeInterface::QAndroidApplication::runOnAndroidMainThread([=]() {
 		QJniObject window = getAndroidWindow();
-		QJniObject view = window.callObjectMethod("getDecorView", "()Landroid/view/View;");
-        int visibility = view.callMethod<int>("getSystemUiVisibility", "()I");
-        if (theme == StatusBar::Theme::Light)
-            visibility |= SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-        else
-            visibility &= ~SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-        view.callMethod<void>("setSystemUiVisibility", "(I)V", visibility);
-    });
+		if (QNativeInterface::QAndroidApplication::sdkVersion() > 30) {
+			QJniObject insetController = window.callObjectMethod(
+						"getInsetsController",
+						"()Landroid/view/WindowInsetsController;");
+			insetController.callMethod<void>(
+						"setSystemBarsAppearance", "(II)V",
+						(theme == StatusBar::Theme::Light ?
+							 APPEARANCE_LIGHT_STATUS_BARS: 0),
+						APPEARANCE_LIGHT_STATUS_BARS);
+		} else {
+			QJniObject view = window.callObjectMethod("getDecorView",
+													  "()Landroid/view/View;");
+			int visibility = view.callMethod<int>("getSystemUiVisibility",
+												  "()I");
+			if (theme == StatusBar::Theme::Light)
+				visibility |= SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+			else
+				visibility &= ~SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+			view.callMethod<void>("setSystemUiVisibility", "(I)V", visibility);
+
+		}
+	});
+}
+
+void StatusBarPrivate::setForceDarkMode_sys(bool force)
+{
+	QNativeInterface::QAndroidApplication::runOnAndroidMainThread(
+				[=]() -> void {
+		QJniObject window = getAndroidWindow();
+		QJniObject view = window.callObjectMethod("getDecorView",
+												  "()Landroid/view/View;");
+		view.callMethod<void>("setForceDarkAllowed", "(Z)V", false);
+	});
 }

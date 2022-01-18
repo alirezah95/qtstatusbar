@@ -106,3 +106,9 @@ void StatusBarPrivate::setTheme_sys(StatusBar::Theme)
         togglePreferredStatusBarStyle();
     }, Qt::UniqueConnection);
 }
+
+void StatusBarPrivate::setForceDarkMode_sys(bool force)
+{
+	Q_UNUSED(force);
+}
+

@@ -36,3 +36,9 @@ void StatusBarPrivate::setTheme_sys(StatusBar::Theme theme)
 {
     Q_UNUSED(theme);
 }
+
+void StatusBarPrivate::setForceDarkMode_sys(bool force)
+{
+	Q_UNUSED(force);
+}
+
